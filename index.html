@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Silver Shoper</title>
+    <link rel="stylesheet" href="static/style.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body class="bg-starfield flex flex-col items-center justify-center h-screen overflow-hidden">
+    <div id="loading" class="fixed top-0 left-0 w-full h-full bg-black bg-opacity-85 flex flex-col items-center justify-center z-50">
+        <div class="w-24 h-24 border-4 border-t-transparent border-yellow-400 rounded-full animate-spin glow"></div>
+        <p class="text-white text-2xl mt-6 font-bold">Загрузка...</p>
+    </div>
+    <div id="notification" class="fixed top-4 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-green-500 to-teal-500 text-white px-8 py-4 rounded-xl shadow-2xl backdrop-blur-md hidden transition-all duration-500"></div>
+    <div id="main-tab" class="tab-content transition-all duration-500">
+        <h1 class="text-6xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-500 mb-8 animate-pulse">Silver Shoper</h1>
+        <div class="relative">
+            <img id="bitcoin-icon" src="static/image/bitco.png" alt="Bitcoin" class="w-52 h-52 cursor-pointer transform hover:scale-110 hover:rotate-12 transition-all duration-300 glow" onclick="tapBitcoin()">
+            <div id="particles" class="absolute inset-0 pointer-events-none"></div>
+        </div>
+        <p class="text-4xl text-white mt-8 font-semibold">Баланс: <span id="balance" class="text-yellow-300">0</span></p>
+    </div>
+    <div id="upgrade-tab" class="tab-content hidden transition-all duration-500 translate-x-full">
+        <h2 class="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-500 mb-8">Прокачка</h2>
+        <div id="upgrades" class="grid grid-cols-2 gap-4 max-h-96 overflow-y-auto p-4 bg-gray-900 bg-opacity-30 rounded-xl backdrop-blur-md"></div>
+    </div>
+    <div id="tops-tab" class="tab-content hidden transition-all duration-500 translate-x-full">
+        <h2 class="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-500 mb-8">Топы</h2>
+        <div id="top-users" class="text-white space-y-3 p-4 bg-gray-900 bg-opacity-30 rounded-xl backdrop-blur-md"></div>
+    </div>
+    <div id="donate-tab" class="tab-content hidden transition-all duration-500 translate-x-full">
+        <h2 class="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-500 mb-8">Донат</h2>
+        <input id="donate-input" type="text" placeholder="Введите множитель (например, x3)" class="p-4 rounded-xl bg-gray-800 bg-opacity-50 text-white focus:outline-none focus:ring-2 focus:ring-yellow-400 backdrop-blur-md">
+        <button class="bg-gradient-to-r from-green-500 to-teal-500 text-white px-8 py-4 rounded-xl mt-6 hover:scale-105 transition-all duration-300 shadow-lg backdrop-blur-md" onclick="initiateDonate()">Купить</button>
+    </div>
+    <nav class="fixed bottom-0 w-full bg-gray-900 bg-opacity-90 p-6 flex justify-around border-t-2 border-yellow-400 shadow-lg">
+        <button class="text-yellow-300 hover:text-yellow-400 text-lg font-semibold transition-all duration-200 transform hover:scale-110" onclick="showTab('main-tab')">Главная</button>
+        <button class="text-yellow-300 hover:text-yellow-400 text-lg font-semibold transition-all duration-200 transform hover:scale-110" onclick="showTab('upgrade-tab')">Прокачка</button>
+        <button class="text-yellow-300 hover:text-yellow-400 text-lg font-semibold transition-all duration-200 transform hover:scale-110" onclick="showTab('tops-tab')">Топы</button>
+        <button class="text-yellow-300 hover:text-yellow-400 text-lg font-semibold transition-all duration-200 transform hover:scale-110" onclick="showTab('donate-tab')">Донат</button>
+    </nav>
+    <script src="static/propirties.js"></script>
+    <script>
+        let balance = 0;
+        let multiplier = 1;
+        let username = 'Unknown';
+
+        // Проверка авторизации
+        if (!Telegram.WebApp.initDataUnsafe.user) {
+            alert('Ошибка авторизации. Откройте через Telegram.');
+            Telegram.WebApp.close();
+        }
+
+        // Показ уведомления
+        function showNotification(message) {
+            const notification = document.getElementById('notification');
+            notification.innerText = message;
+            notification.classList.remove('hidden', 'opacity-0');
+            setTimeout(() => {
+                notification.classList.add('opacity-0');
+                setTimeout(() => notification.classList.add('hidden'), 500);
+            }, 3500);
+        }
+
+        // Частицы при клике
+        function createParticles() {
+            const particlesDiv = document.getElementById('particles');
+            for (let i = 0; i < 15; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'absolute w-2 h-2 bg-yellow-300 rounded-full animate-particle';
+                particle.style.left = `${Math.random() * 100}%`;
+                particle.style.top = `${Math.random() * 100}%`;
+                particle.style.setProperty('--random-x', Math.random() * 2 - 1);
+                particle.style.setProperty('--random-y', Math.random() * 2 - 1);
+                particlesDiv.appendChild(particle);
+                setTimeout(() => particle.remove(), 1000);
+            }
+        }
+
+        // Тап по биткоину
+        function tapBitcoin() {
+            balance += multiplier;
+            document.getElementById('balance').innerText = balance;
+            createParticles();
+            fetch('/update_score', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ user_id: Telegram.WebApp.initDataUnsafe.user.id, username: Telegram.WebApp.initDataUnsafe.user.username })
+            }).then(res => res.json()).then(data => {
+                balance = data.balance;
+                document.getElementById('balance').innerText = balance;
+                showNotification(`+${multiplier} монет!`);
+            });
+        }
+
+        // Показ вкладки
+        function showTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.add('opacity-0', 'translate-x-full');
+                setTimeout(() => tab.classList.add('hidden'), 500);
+            });
+            const tab = document.getElementById(tabId);
+            tab.classList.remove('hidden');
+            setTimeout(() => {
+                tab.classList.remove('opacity-0', 'translate-x-full');
+            }, 10);
+            if (tabId === 'tops-tab') loadTopUsers();
+            if (tabId === 'upgrade-tab') loadUpgrades();
+        }
+
+        // Покупка улучшения
+        function buyUpgrade(level, price) {
+            if (balance >= price) {
+                fetch('/update_score', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: Telegram.WebApp.initDataUnsafe.user.id, username: username })
+                }).then(() => {
+                    balance -= price;
+                    multiplier = level;
+                    document.getElementById('balance').innerText = balance;
+                    showNotification(`Куплено улучшение x${level}!`);
+                    loadUpgrades();
+                });
+            } else {
+                showNotification('Недостаточно монет!');
+            }
+        }
+
+        // Загрузка улучшений
+        function loadUpgrades() {
+            fetch('/get_properties')
+                .then(res => res.json())
+                .then(data => {
+                    const upgradesDiv = document.getElementById('upgrades');
+                    upgradesDiv.innerHTML = '';
+                    for (let i = 1; i <= 500; i++) {
+                        const button = document.createElement('button');
+                        button.className = 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white px-4 py-2 rounded-lg hover:scale-105 transition-all duration-300 shadow-md backdrop-blur-md';
+                        button.innerText = `x${i} за ${properties.upgrades[`level_${i}_price`]} монет`;
+                        button.onclick = () => buyUpgrade(i, properties.upgrades[`level_${i}_price`]);
+                        upgradesDiv.appendChild(button);
+                    }
+                });
+        }
+
+        // Загрузка топа
+        function loadTopUsers() {
+            fetch('/get_top_users')
+                .then(res => res.json())
+                .then(users => {
+                    const topUsersDiv = document.getElementById('top-users');
+                    topUsersDiv.innerHTML = '';
+                    users.forEach((user, index) => {
+                        const div = document.createElement('div');
+                        div.className = 'bg-gray-800 bg-opacity-50 p-3 rounded-lg backdrop-blur-md';
+                        div.innerText = `${index + 1}. 🧑 ${user.username} - ${user.balance} монет`;
+                        topUsersDiv.appendChild(div);
+                    });
+                });
+        }
+
+        // Покупка доната
+        function initiateDonate() {
+            const input = document.getElementById('donate-input').value;
+            if (input.startsWith('x')) {
+                const multiplier = parseInt(input.slice(1));
+                if (multiplier > 0) {
+                    Telegram.WebApp.openLink(`${properties.webapp_url}/donate?multiplier=${multiplier}`);
+                }
+            }
+        }
+
+        // Инициализация
+        document.getElementById('loading').classList.remove('hidden');
+        fetch(`/get_balance?user_id=${Telegram.WebApp.initDataUnsafe.user.id}`)
+            .then(res => res.json())
+            .then(data => {
+                balance = data.balance;
+                multiplier = data.multiplier;
+                username = data.username;
+                document.getElementById('balance').innerText = balance;
+                document.getElementById('loading').classList.add('hidden');
+                loadUpgrades();
+            });
+    </script>
+</body>
+</html>

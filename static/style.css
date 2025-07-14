@@ -1,0 +1,117 @@
+body {
+    background: linear-gradient(to bottom, #0f172a, #1e293b);
+    font-family: 'Montserrat', sans-serif;
+    color: white;
+    position: relative;
+    overflow: hidden;
+}
+
+.bg-starfield::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.15) 1px, transparent 1px);
+    background-size: 15px 15px;
+    animation: twinkling 8s infinite;
+    z-index: -1;
+}
+
+.bg-starfield::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0.5px, transparent 0.5px);
+    background-size: 30px 30px;
+    animation: twinkling 12s infinite reverse;
+    z-index: -1;
+}
+
+.bg-starfield {
+    position: relative;
+}
+
+.bg-starfield::before, .bg-starfield::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+@keyframes twinkling {
+    0% { opacity: 0.4; }
+    50% { opacity: 0.8; }
+    100% { opacity: 0.4; }
+}
+
+.tab-content {
+    text-align: center;
+    padding: 20px;
+    z-index: 1;
+    transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.translate-x-full {
+    transform: translateX(100%);
+}
+
+.animate-bounce {
+    animation: bounce 1.2s infinite;
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-25px); }
+}
+
+.glow {
+    filter: drop-shadow(0 0 15px rgba(234, 179, 8, 0.8));
+}
+
+button {
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+button:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+}
+
+#notification {
+    z-index: 100;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+}
+
+#loading div {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    100% { transform: rotate(360deg); }
+}
+
+input {
+    transition: all 0.3s;
+}
+
+input:focus {
+    transform: scale(1.02);
+    box-shadow: 0 0 10px rgba(234, 179, 8, 0.5);
+}
+
+.animate-particle {
+    animation: particle 1s ease-out;
+}
+
+@keyframes particle {
+    0% { transform: translate(0, 0); opacity: 1; }
+    100% { transform: translate(calc(120px * var(--random-x)), calc(120px * var(--random-y))); opacity: 0; }
+}
